@@ -1,26 +1,19 @@
 <template>
   <div id = "app">
     <ManagerHeader />
-    <GetData />
-    <br><br>
-    <SearchBar/>
-    <ManagerTableView />
+    <GetData />    
   </div>
 </template>
 
 <script>
 import ManagerHeader from "./components/ManagerHeader";
 import GetData from './components/GetData.vue';
-import ManagerTableView from './components/ManagerTableView.vue';
-import SearchBar from './components/SearchBar.vue';
 
 export default {
   name : "App",
   components: {
     ManagerHeader,
     GetData,
-    SearchBar,
-    ManagerTableView,
   },
 }
 </script>

@@ -1,6 +1,7 @@
 <!-- GetData -->
 
 <template>
+    <div>
         <div style="float:right; marginRight : 10px">
             <input ref = "csv" type = "file" @change.prevent="validFileMimeType" name = "csv">
             <slot name = "error" v-if = "showErrorMessage">
@@ -14,15 +15,21 @@
                 </button>
             </slot>
         </div>
+        <br><br>
+        <ManagerTableView :totalList.sync="datatable" />
+    </div>
 </template>
 
 <script>
 import { drop, forEach, get, map, set } from 'lodash';
 import Papa from 'papaparse';
 import mimeTypes from "mime-types";
-import { EventBus } from '../utils/EventBus';
+import ManagerTableView from '@/components/ManagerTableView.vue';
 
 export default {
+    components: {
+        ManagerTableView
+    },
     props:{
         url: {
                 type: String
@@ -56,8 +63,8 @@ export default {
         csv: null,
         isValidFileMimeType: false,
         fileSelected: false,
+        datatable: [],
     }),
-    
     methods: {
         validFileMimeType() {
                 let file = this.$refs.csv.files[0];
@@ -81,7 +88,7 @@ export default {
                 console.log(output);
                 result = get(Papa.parse(output, {skipEmptyLines: true, header:true}), "data");
                 console.log(result);
-                this.sender(result);
+                this.datatable = result;
             });
             console.log('load 끝');
 
@@ -99,8 +106,8 @@ export default {
                 console.log('readFile 함수');
             }
         },
-        sender(result){
-            EventBus.$emit('use_eventbus', result);
+        makeNewFile(){
+            //this.datatable로 새 엑셀 만들면됨.
         }
     },
     computed: {
