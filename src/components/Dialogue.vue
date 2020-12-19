@@ -11,14 +11,14 @@
 
             <form @submit.prevent="sendMessage('in')" id="person1-form" style="margin-left: 30px;">
                 <label for="person1-input">Bob</label>
-                <input v-model="bobMessage" id="person1-input" type="text" placeholder="Type your message">
+                <input v-model="c_Message" id="person1-input" type="text" placeholder="Type your message">
                 <button type="submit">Send</button>
             </form>
         
         <button @click="clearAllMessages">Clear All</button>
             <form @submit.prevent="sendMessage('out')" id="person2-form" style="margin-right: 30px;">
                 <label for="person2-input">You</label>
-                <input v-model="youMessage" id="person2-input" type="text" placeholder="Type your message">
+                <input v-model="s_Message" id="person2-input" type="text" placeholder="Type your message">
                 <button type="submit">Send</button>
             </form>
         </section>
@@ -32,8 +32,8 @@ import Vue from 'vue';
 export default {
     data(){
         return {
-            bobMessage: '',
-            youMessage: '',
+            c_Message: '',
+            s_Message: '',
             messages: [
                     {
                     body: 'Welcome to the chat, I\'m Bob!',
@@ -56,11 +56,11 @@ export default {
                 return
             }
             if (direction === 'out') {
-                this.messages.push({body: this.youMessage, author: 'you'});
-                this.youMessage = '';
+                this.messages.push({body: this.s_Message, author: 'you'});
+                this.s_Message = '';
             } else if (direction === 'in') {
-                this.messages.push({body: this.bobMessage, author: 'bob'});
-                this.bobMessage = '';
+                this.messages.push({body: this.c_Message, author: 'bob'});
+                this.c_Message = '';
             } else {
                 alert('something went wrong');
             }
