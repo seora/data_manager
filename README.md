@@ -1,5 +1,7 @@
 # data_manager
 
+> MRC를 위한 데이터 관리 프로젝트
+
 > A Vue.js project
 
 ## Build Setup

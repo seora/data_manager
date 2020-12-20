@@ -1,9 +1,10 @@
 <template>
     <div>
+        <p style="font-size:15px; float:right;">{{ timestamp }}</p>
         <br>
         <section ref="chatArea" class="chat-area">
-            <p v-for="message in messages" :key="message" class="message" :class="{ 'message-out': message.author === 'you', 'message-in': message.author !== 'you' }">
-                {{ message.body }}
+            <p v-for="message in messages" :key="message" class="message" :class="{ 'message-out': message.화자  === 's', 'message-in': message.화자  !== 's' }">
+                {{ message.문장 }}
             </p>
         </section>
 
@@ -32,34 +33,35 @@ import Vue from 'vue';
 export default {
     data(){
         return {
+            timestamp:'',
             c_Message: '',
             s_Message: '',
             messages: [
                     {
-                    body: 'Welcome to the chat, I\'m Bob!',
-                    author: 'bob'
+                    문장: 'Welcome to the chat, I\'m Bob!',
+                    화자 : 'bob'
                 },
                 {
-                    body: 'Thank you Bob',
-                    author: 'you'
+                    문장: 'Thank you Bob',
+                    화자 : 'you'
                 },
                 {
-                    body: 'You\'re most welcome',
-                    author: 'bob'
+                    문장: 'You\'re most welcome',
+                    화자 : 'bob'
                 }
             ],
         }
     },
     methods:{
         endMessage(direction) {
-            if (!this.youMessage && !this.bobMessage) {
+            if (!this.s_Message && !this.c_Message) {
                 return
             }
             if (direction === 'out') {
-                this.messages.push({body: this.s_Message, author: 'you'});
+                this.messages.push({문장: this.s_Message, 화자 : 's'});
                 this.s_Message = '';
             } else if (direction === 'in') {
-                this.messages.push({body: this.c_Message, author: 'bob'});
+                this.messages.push({문장: this.c_Message, 화자 : 'c'});
                 this.c_Message = '';
             } else {
                 alert('something went wrong');
@@ -72,13 +74,21 @@ export default {
         clearAllMessages() {
         this.messages = []
         }
+    },
+    created(){
+        const now = new Date();
+        const month = now.getMonth() + 1;
+        const date = now.getDate();
+        const weekList = new Array("Sun.", "Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.");
+        const week = weekList[now.getDay()];
+        this.timestamp = `${month}/${date} ${week}`;
     }
 
 }
 </script>
 
 <style scoped>
-body, html {
+문장, html {
   font-family: sans-serif;
   font-weight: 100;
 }
