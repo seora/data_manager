@@ -1,89 +1,93 @@
 <template>
     <div>
-        <p style="font-size:15px; float:right;">{{ timestamp }}</p>
-        <br>
+        <main>
         <section ref="chatArea" class="chat-area">
-            <p v-for="message in messages" :key="message" class="message" :class="{ 'message-out': message.화자  === 's', 'message-in': message.화자  !== 's' }">
-                {{ message.문장 }}
+            <p v-for="message in messages" :key="message" class="message" :class="{ 'message-out': message.화자 === 'you', 'message-in': message.화자 !== 'you' }">
+            {{ message.문장 }}
             </p>
         </section>
 
-        <section class="chat-inputs">
+        <section class="chat-subject">
 
-            <form @submit.prevent="sendMessage('in')" id="person1-form" style="margin-left: 30px;">
-                <label for="person1-input">Bob</label>
-                <input v-model="c_Message" id="person1-input" type="text" placeholder="Type your message">
+            <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray">
+                <option value="">카테고리별</option>
+                <option v-for="idx in listCategory.length" :key="idx" :value="listCategory[idx-1]">{{ listCategory[idx-1] }}</option>
+            </select>
+
+            <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray">
+                <option value="">Intent</option>
+                <option v-for="idx in listIntent.length" :key="idx" :value="listIntent[idx-1]">{{ listIntent[idx-1] }}</option>
+            </select>
+
+            <input type="checkbox" v-model="toggleQ" true-value="Q" false-value=""> Q
+            <input type="checkbox" v-model="toggleA" true-value="A" false-value=""> A
+
+        </section>
+
+        <section class="chat-inputs" style="margin: 10px;">
+
+            <form @submit.prevent="sendMessage('in')" id="person1-form">
+                <label for="person1-input">고객</label>
+                <input v-model="sMessage" id="person1-input" type="text" placeholder="Type your message">
                 <button type="submit">Send</button>
             </form>
-        
-        <button @click="clearAllMessages">Clear All</button>
-            <form @submit.prevent="sendMessage('out')" id="person2-form" style="margin-right: 30px;">
-                <label for="person2-input">You</label>
-                <input v-model="s_Message" id="person2-input" type="text" placeholder="Type your message">
+            <button class="btn btn-primary" @click="clearAllMessages">대화 끝내기</button>
+            <form @submit.prevent="sendMessage('out')" id="person2-form">
+                <label for="person2-input">점원</label>
+                <input v-model="cMessage" id="person2-input" type="text" placeholder="Type your message">
                 <button type="submit">Send</button>
             </form>
         </section>
+        </main>
     </div>
             
 </template>
 
 <script>
 import Vue from 'vue';
-
 export default {
     data(){
         return {
             timestamp:'',
-            c_Message: '',
-            s_Message: '',
-            messages: [
-                    {
-                    문장: 'Welcome to the chat, I\'m Bob!',
-                    화자 : 'bob'
-                },
-                {
-                    문장: 'Thank you Bob',
-                    화자 : 'you'
-                },
-                {
-                    문장: 'You\'re most welcome',
-                    화자 : 'bob'
-                }
-            ],
+            sMessage: '',
+            cMessage: '',
+            messages: [],
+
+
+            listCategory:[],
+            listIntent:[],
+            toggleQ:'',
+            toggleA:'',
         }
     },
-    methods:{
-        endMessage(direction) {
-            if (!this.s_Message && !this.c_Message) {
-                return
-            }
-            if (direction === 'out') {
-                this.messages.push({문장: this.s_Message, 화자 : 's'});
-                this.s_Message = '';
-            } else if (direction === 'in') {
-                this.messages.push({문장: this.c_Message, 화자 : 'c'});
-                this.c_Message = '';
-            } else {
-                alert('something went wrong');
-            }
-            Vue.nextTick(() => {
-                let messageDisplay = this.$refs.chatArea;
-                messageDisplay.scrollTop = messageDisplay.scrollHeight;
-            })
+   methods: {
+        sendMessage(direction) {
+        if (!this.cMessage && !this.sMessage) {
+            return
+        }
+        if (direction === 'out') {
+            this.messages.push({문장: this.cMessage, 화자: 'you'})
+            this.cMessage = ''
+        } else if (direction === 'in') {
+            this.messages.push({문장: this.sMessage, 화자: 'bob'})
+            this.sMessage = ''
+        } else {
+            alert('something went wrong')
+        }
+        Vue.nextTick(() => {
+            let messageDisplay = this.$refs.chatArea
+            messageDisplay.scrollTop = messageDisplay.scrollHeight
+        })
         },
+
         clearAllMessages() {
+        //대화 끝내기 - 데이터는 테이블 뷰로 넘기고 윗부분은 clear
         this.messages = []
         }
     },
-    created(){
-        const now = new Date();
-        const month = now.getMonth() + 1;
-        const date = now.getDate();
-        const weekList = new Array("Sun.", "Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.");
-        const week = weekList[now.getDay()];
-        this.timestamp = `${month}/${date} ${week}`;
-    }
+    computed:{
 
+    }
 }
 </script>
 
@@ -92,7 +96,6 @@ export default {
   font-family: sans-serif;
   font-weight: 100;
 }
-
 .chat-area {
 /*   border: 1px solid #ccc; */
   background: white;
@@ -126,12 +129,9 @@ export default {
 #person1-input {
   padding: .5em;
   width: 350px;
-  height: 100px;
-  
 }
 #person2-input {
   padding: .5em;
   width: 350px;
 }
-
 </style>

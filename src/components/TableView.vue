@@ -151,7 +151,7 @@
                                 <input style="width:100%;" v-model="datalist.entity_2">
                             </div>
                         </td>
-                        <td>{{datalist.emotion}}</td>
+                        <td>{{datalist.emotion_tagging}}</td>
                     </tr>
                 </tbody>
             </table>
