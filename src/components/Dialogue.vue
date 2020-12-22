@@ -1,7 +1,6 @@
 <template>
     <div>
         <main>
-            {{ jsonlist }}
             <section ref="chatArea" class="chat-area">
                 <p v-for="message in messages" :key="message" class="message" :class="{ 'message-out': message.화자 === 's', 'message-in': message.화자 !== 's' }">
                 {{ message.문장 }}
@@ -43,12 +42,12 @@
             </section>
         </main>
     </div>
-
 </template>
 
 <script>
 import Vue from 'vue';
 import {components} from 'vue';
+import router from '../router';
 
 export default {
     data(){
@@ -57,26 +56,18 @@ export default {
             sMessage: '',
             cMessage: '',
             messages: [],
-
-
             listCategory:[],
             listIntent:[],
             toggleQ:'',
             toggleA:'',
-
             totalList:[],
             dialogueList:[],
         }
     },
     created(){
-        console.log('dialogue');
-        console.log("router", this.$router)
-        console.log("route", this.$route)
-    },
-    computed:{
-        jsonlist(){
-            
-        }
+        this.totalList = this.$store.state.totalList;
+        this.listIntent = this.$store.getters.getIntentlist;
+        this.listCategory = this.$store.getters.getCategorylist;
     },
     methods: {
         sendMessage(direction) {
@@ -103,8 +94,8 @@ export default {
         },
         
         clearAllMessages() {
-        //대화 끝내기 - 데이터는 테이블 뷰로 넘기고 윗부분은 clear
-        this.messages = []
+            //대화 끝내기 - 데이터는 테이블 뷰로 넘기고 윗부분은 clear
+            this.messages = []
         }
     },
     computed:{

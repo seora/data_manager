@@ -226,7 +226,7 @@ export default {
         this.datatable = this.totalList;
     },
     watch: {
-        totalList: function (val) {
+        totalList(val) {
             this.datatable = val;
             this.getIntentlist();
             this.getCategorylist();
@@ -239,25 +239,11 @@ export default {
         }
     },
     methods: {
-        getIntentlist(){
-            console.log("여기 intentlist 가져올래!");
-            var intentlist = new Array();
-            for(var i = 0; i <this.datatable.length; i++){
-                intentlist.push(this.datatable[i].intent);
-            }
-            this.listIntent = Array.from(new Set(intentlist));
-            console.log(this.listIntent);
-            return this.listIntent;
+        getIntentlist() {
+            this.intentlist = this.$store.getters.getIntentlist;
         },
         getCategorylist(){
-            console.log("여기 category 가져올래!");
-            var categorylist = new Array();
-            for(var i = 0; i <this.datatable.length; i++){
-                categorylist.push(this.datatable[i].카테고리);
-            }
-            this.listCategory = Array.from(new Set(categorylist));
-            console.log(this.listCategory);
-            return this.listCategory;
+            this.listCategory = this.$store.getters.getCategorylist;
         },
         getWordlist(){
             console.log("문장 전체 리스트에서 단어");

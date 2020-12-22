@@ -12,12 +12,15 @@ export default new Router({
     {
       path: '/',
       name: 'Home',
-      component: Home
+      component: Home,
+      props: true
     },
     {
       path: '/create',
       name: 'Create',
-      component : Create
+      component : Create,
+      props: true
+
     },
   ]
 })

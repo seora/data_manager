@@ -34,8 +34,6 @@ import Papa from 'papaparse';
 import mimeTypes from "mime-types";
 import TableView from '@/components/TableView.vue';
 import JsonExcel from "vue-json-excel";
-
-
  
 Vue.component("downloadExcel", JsonExcel);
 
@@ -86,6 +84,11 @@ export default {
         },
         disabledNextButton() {
             return !this.isValidFileMimeType;
+        },
+    },
+    watch: {
+        totalList() {
+            this.$store.commit('chngTotalList', this.totalList);
         }
     },
     methods: {
