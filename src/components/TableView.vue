@@ -174,7 +174,10 @@ Vue.use(BootstrapVue);
 
 var Hangul = require('hangul-js');
 
+import { store } from "@/util/store";
+
 export default {
+    store: store,
     props: {
         totalList: {
             type: Array,
@@ -211,6 +214,7 @@ export default {
     },
     created(){
         console.log('데이터 받아왔어요');
+        this.getStore();
         console.log(this.totalList);
         this.datatable = this.totalList;
     },
@@ -220,6 +224,8 @@ export default {
             this.getIntentlist();
             this.getCategorylist();
             this.getWordlist();
+            this.setStore();
+            this.getStore();
         },
     },
     computed: {
@@ -243,24 +249,10 @@ export default {
     },
     methods: {
         getIntentlist(){
-            console.log("여기 intentlist 가져올래!");
-            var intentlist = new Array();
-            for(var i = 0; i <this.totalList.length; i++){
-                intentlist.push(this.totalList[i].intent);
-            }
-            this.listIntent = Array.from(new Set(intentlist));
-            console.log(this.listIntent);
-            return this.listIntent;
+            this.intentlist = this.$store.getters.getIntentlist;
         },
         getCategorylist(){
-            console.log("여기 category 가져올래!");
-            var categorylist = new Array();
-            for(var i = 0; i <this.totalList.length; i++){
-                categorylist.push(this.totalList[i].카테고리);
-            }
-            this.listCategory = Array.from(new Set(categorylist));
-            console.log(this.listCategory);
-            return this.listCategory;
+            this.listCategory = this.$store.getters.getCategorylist;
         },
         getWordlist(){
             console.log("문장 전체 리스트에서 단어");
@@ -371,9 +363,19 @@ export default {
         },
         prevPage(){
             this.pageNum -= 1;
+        },
+
+        //저장소에 데이터 넘기기
+        setStore(){
+            this.$store.commit('chngTotalList', this.totalList);
+            this.$store.state.categorylist = this.listCategory;
+            this.$store.state.intentlist = this.listIntent;
+        },
+
+        //저장소에서 데이터 가져오기
+        getStore(){
+            this.totalList = this.$store.state.totalList;
         }
-
-
 
     }
 

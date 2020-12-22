@@ -36,18 +36,16 @@ import TableView from '@/components/TableView.vue';
 import JsonExcel from "vue-json-excel";
 
 
- 
 Vue.component("downloadExcel", JsonExcel);
 
+import { store } from "@/util/store";
 
 export default {
+    store: store,
     components: {
         TableView
     },
     props:{
-        url: {
-                type: String
-            },
         fileMimeTypes: {
                 type: Array,
                 default: () => {
@@ -80,6 +78,11 @@ export default {
         totalList: [],
         fileName:'',
     }),
+    watch: {
+        totalList() {
+            this.$store.commit('chngTotalList', this.totalList);
+        }
+    },
     computed: {
         showErrorMessage() {
                 return this.fileSelected && !this.isValidFileMimeType;
@@ -113,6 +116,7 @@ export default {
                 this.totalList = result;
             });
             console.log('load 끝');
+            this.setStore();
 
         },
         readFile(callback) {
@@ -130,6 +134,7 @@ export default {
                 console.log('readFile 함수');
             }
         },
+        
     },
 
 }

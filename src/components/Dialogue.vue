@@ -1,28 +1,31 @@
 <template>
     <div>
         <main>
-            {{ jsonlist }}
             <section ref="chatArea" class="chat-area">
                 <p v-for="message in messages" :key="message" class="message" :class="{ 'message-out': message.화자 === 's', 'message-in': message.화자 !== 's' }">
                 {{ message.문장 }}
                 </p>
             </section>
-
+            
             <section class="chat-subject">
+                <div>
+                    <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray; marginLeft:20px;" v-model="pickCategory">
+                        <option value="">카테고리별</option>
+                        <option v-for="idx in listCategory.length" :key="idx" :value="listCategory[idx-1]">{{ listCategory[idx-1] }}</option>
+                    </select>
 
-                <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray; marginLeft:20px;">
-                    <option value="">카테고리별</option>
-                    <option v-for="idx in listCategory.length" :key="idx" :value="listCategory[idx-1]">{{ listCategory[idx-1] }}</option>
-                </select>
+                    <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray; marginLeft:20px;" v-model="pickIntent">
+                        <option value="">Intent</option>
+                        <option v-for="idx in listIntent.length" :key="idx" :value="listIntent[idx-1]">{{ listIntent[idx-1] }}</option>
+                    </select>
 
-                <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray; marginLeft:20px;">
-                    <option value="">Intent</option>
-                    <option v-for="idx in listIntent.length" :key="idx" :value="listIntent[idx-1]">{{ listIntent[idx-1] }}</option>
-                </select>
-
-                <input type="checkbox" v-model="toggleQ" true-value="Q" false-value="" style="marginLeft:20px;"> Q
-                <input type="checkbox" v-model="toggleA" true-value="A" false-value="" style="marginLeft:20px;"> A
-
+                    <input type="radio" id="one" v-model="pickQA" value="Q" style="marginLeft:20px;"> Q
+                    <input type="radio" id="two" v-model="pickQA" value="A" style="marginLeft:20px;"> A
+                </div>
+                <div align="right" style="marginLeft:50px;">
+                    <button class="refreshbtn" @click="refreshMessages()"><img src="../assets/reload.png"></button>
+                </div>
+                
             </section>
 
             <section class="chat-inputs" style="margin: 30px;">
@@ -33,7 +36,7 @@
                     <button type="submit" class="btn btn-outline-dark">Send</button>
                 </form>
 
-                <button class="btn btn-primary" @click="clearAllMessages">대화 끝내기</button>
+                <button class="btn btn-primary" @click="sendAllMessages">대화 끝내기</button>
 
                 <form @submit.prevent="sendMessage('out')" id="person2-form" >
                     <label for="person2-input">점원</label>
@@ -41,6 +44,14 @@
                     <button type="submit" class="btn btn-outline-dark">Send</button>
                 </form>
             </section>
+
+            <modal v-if="showModal" @close="showModal = false">
+                <h3 slot="header">경고</h3>
+                <span slot="body">입력 사항을 모두 선택해주세요.</span>
+                <button slot="footer" @click="showModal = false">닫기</button>
+            </modal>
+
+            
         </main>
     </div>
 
@@ -48,9 +59,18 @@
 
 <script>
 import Vue from 'vue';
+import Vuex from 'vuex';
 import {components} from 'vue';
 
+import Modal from './modal.vue';
+
+import { store } from "@/util/store";
+
 export default {
+    store: store,
+    components:{
+        Modal : Modal
+    },
     data(){
         return {
             timestamp:'',
@@ -58,36 +78,41 @@ export default {
             cMessage: '',
             messages: [],
 
-
             listCategory:[],
             listIntent:[],
-            toggleQ:'',
-            toggleA:'',
 
-            totalList:[],
             dialogueList:[],
+
+            pickCategory:'',
+            pickIntent:'',
+            pickQA:'',
+            count:0,
+
+            sendData:[],
+            showModal: false
         }
-    },
+    }, 
     created(){
-        console.log('dialogue');
-        console.log("router", this.$router)
-        console.log("route", this.$route)
-    },
-    computed:{
-        jsonlist(){
-            
-        }
+        this.getTimeStamp();
+        console.log("store에서 데이터 받아왔음!")
+        this.dialogueList = this.$store.state.totalList;
+        this.listIntent = this.$store.getters.getIntentlist;
+        this.listCategory = this.$store.getters.getCategorylist;
+        console.log(this.dialogueList);
     },
     methods: {
         sendMessage(direction) {
+
+            this.setCount();
+
             if (!this.cMessage && !this.sMessage) {
                 return
             }
             if (direction === 'out') {
-                this.messages.push({문장: this.cMessage, 화자: 's'})
+                this.messages.push({날짜: this.timestamp, QA번호 : this.count, 대화순번: 1, 화자: 's', QA여부: this.toggleQA, 문장: this.cMessage, 카테고리:this.pickCategory, 상담번호:'', 상담내순번:1, intent: this.pickIntent, entity_1:'', entity_2:'', emotion_tagging:''})
                 this.cMessage = ''
             } else if (direction === 'in') {
-                this.messages.push({문장: this.sMessage, 화자: 'c'})
+                this.messages.push({날짜: this.timestamp, QA번호 : this.count, 대화순번: 2, 화자: 'c', QA여부: this.toggleQA, 문장: this.sMessage, 카테고리:this.pickCategory, 상담번호:'', 상담내순번:2, intent: this.pickIntent, entity_1:'', entity_2:'', emotion_tagging:''})
                 this.sMessage = ''
             } else {
                 alert('something went wrong')
@@ -96,20 +121,38 @@ export default {
                 let messageDisplay = this.$refs.chatArea
                 messageDisplay.scrollTop = messageDisplay.scrollHeight
             })
+
         },
-        getIntentCategorylist(){
-            this.listIntent = TableView.getIntentlist();
-            this.listCategory = TableView.getCategorylist();
+
+        setCount(){
+            this.count = this.count+1;
+        },
+
+        getTimeStamp(){
+            const today = new Date();
+            const date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+            this.timestamp = date;
         },
         
-        clearAllMessages() {
+        sendAllMessages() {
         //대화 끝내기 - 데이터는 테이블 뷰로 넘기고 윗부분은 clear
-        this.messages = []
+            if(this.pickCategory !== '' && this.pickIntent !== '' && this.pickQA !== ''){
+                this.sendData = this.dialogueList.concat(this.messages);
+                console.log(this.sendData);
+                this.$store.commit('chngTotalList', this.sendData);
+                this.messages = [];
+                this.count=0;
+            }else{
+                this.showModal = !this.showModal;
+            }
+            
+        },
+
+        //대화 새로고침
+        refreshMessages(){
+            this.messages = [];
         }
     },
-    computed:{
-
-    }
 }
 </script>
 
@@ -162,4 +205,11 @@ export default {
   padding: .5em;
   width: 350px;
 }
+
+.refreshbtn{
+    background-color: rgba( 255, 255, 255, 0.5 );
+    outline: none;
+    border:none
+}
+
 </style>
