@@ -1,50 +1,55 @@
 <template>
     <div>
         <main>
-        <section ref="chatArea" class="chat-area">
-            <p v-for="message in messages" :key="message" class="message" :class="{ 'message-out': message.화자 === 'you', 'message-in': message.화자 !== 'you' }">
-            {{ message.문장 }}
-            </p>
-        </section>
+            {{ jsonlist }}
+            <section ref="chatArea" class="chat-area">
+                <p v-for="message in messages" :key="message" class="message" :class="{ 'message-out': message.화자 === 's', 'message-in': message.화자 !== 's' }">
+                {{ message.문장 }}
+                </p>
+            </section>
 
-        <section class="chat-subject">
+            <section class="chat-subject">
 
-            <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray">
-                <option value="">카테고리별</option>
-                <option v-for="idx in listCategory.length" :key="idx" :value="listCategory[idx-1]">{{ listCategory[idx-1] }}</option>
-            </select>
+                <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray; marginLeft:20px;">
+                    <option value="">카테고리별</option>
+                    <option v-for="idx in listCategory.length" :key="idx" :value="listCategory[idx-1]">{{ listCategory[idx-1] }}</option>
+                </select>
 
-            <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray">
-                <option value="">Intent</option>
-                <option v-for="idx in listIntent.length" :key="idx" :value="listIntent[idx-1]">{{ listIntent[idx-1] }}</option>
-            </select>
+                <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray; marginLeft:20px;">
+                    <option value="">Intent</option>
+                    <option v-for="idx in listIntent.length" :key="idx" :value="listIntent[idx-1]">{{ listIntent[idx-1] }}</option>
+                </select>
 
-            <input type="checkbox" v-model="toggleQ" true-value="Q" false-value=""> Q
-            <input type="checkbox" v-model="toggleA" true-value="A" false-value=""> A
+                <input type="checkbox" v-model="toggleQ" true-value="Q" false-value="" style="marginLeft:20px;"> Q
+                <input type="checkbox" v-model="toggleA" true-value="A" false-value="" style="marginLeft:20px;"> A
 
-        </section>
+            </section>
 
-        <section class="chat-inputs" style="margin: 10px;">
+            <section class="chat-inputs" style="margin: 30px;">
 
-            <form @submit.prevent="sendMessage('in')" id="person1-form">
-                <label for="person1-input">고객</label>
-                <input v-model="sMessage" id="person1-input" type="text" placeholder="Type your message">
-                <button type="submit">Send</button>
-            </form>
-            <button class="btn btn-primary" @click="clearAllMessages">대화 끝내기</button>
-            <form @submit.prevent="sendMessage('out')" id="person2-form">
-                <label for="person2-input">점원</label>
-                <input v-model="cMessage" id="person2-input" type="text" placeholder="Type your message">
-                <button type="submit">Send</button>
-            </form>
-        </section>
+                <form @submit.prevent="sendMessage('in')" id="person1-form">
+                    <label for="person1-input">고객</label>
+                    <input v-model="sMessage" id="person1-input" type="text" placeholder="Type your message">
+                    <button type="submit" class="btn btn-outline-dark">Send</button>
+                </form>
+
+                <button class="btn btn-primary" @click="clearAllMessages">대화 끝내기</button>
+
+                <form @submit.prevent="sendMessage('out')" id="person2-form" >
+                    <label for="person2-input">점원</label>
+                    <input v-model="cMessage" id="person2-input" type="text" placeholder="Type your message">
+                    <button type="submit" class="btn btn-outline-dark">Send</button>
+                </form>
+            </section>
         </main>
     </div>
-            
+
 </template>
 
 <script>
 import Vue from 'vue';
+import {components} from 'vue';
+
 export default {
     data(){
         return {
@@ -58,28 +63,45 @@ export default {
             listIntent:[],
             toggleQ:'',
             toggleA:'',
+
+            totalList:[],
+            dialogueList:[],
         }
     },
-   methods: {
+    created(){
+        console.log('dialogue');
+        console.log("router", this.$router)
+        console.log("route", this.$route)
+    },
+    computed:{
+        jsonlist(){
+            
+        }
+    },
+    methods: {
         sendMessage(direction) {
-        if (!this.cMessage && !this.sMessage) {
-            return
-        }
-        if (direction === 'out') {
-            this.messages.push({문장: this.cMessage, 화자: 'you'})
-            this.cMessage = ''
-        } else if (direction === 'in') {
-            this.messages.push({문장: this.sMessage, 화자: 'bob'})
-            this.sMessage = ''
-        } else {
-            alert('something went wrong')
-        }
-        Vue.nextTick(() => {
-            let messageDisplay = this.$refs.chatArea
-            messageDisplay.scrollTop = messageDisplay.scrollHeight
-        })
+            if (!this.cMessage && !this.sMessage) {
+                return
+            }
+            if (direction === 'out') {
+                this.messages.push({문장: this.cMessage, 화자: 's'})
+                this.cMessage = ''
+            } else if (direction === 'in') {
+                this.messages.push({문장: this.sMessage, 화자: 'c'})
+                this.sMessage = ''
+            } else {
+                alert('something went wrong')
+            }
+            Vue.nextTick(() => {
+                let messageDisplay = this.$refs.chatArea
+                messageDisplay.scrollTop = messageDisplay.scrollHeight
+            })
         },
-
+        getIntentCategorylist(){
+            this.listIntent = TableView.getIntentlist();
+            this.listCategory = TableView.getCategorylist();
+        },
+        
         clearAllMessages() {
         //대화 끝내기 - 데이터는 테이블 뷰로 넘기고 윗부분은 clear
         this.messages = []
@@ -105,6 +127,12 @@ export default {
   max-width: 1000px;
   margin: 0 auto 2em auto;
   box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3)
+}
+.chat-subject{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin:20px;
 }
 .message {
   width: 45%;
