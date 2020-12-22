@@ -2,7 +2,7 @@
 
 <template>
     <div>
-        <div style="float:right; marginRight : 10px">
+        <div style="float:left; marginLeft : 10px; marginTop:10px;">
             <input ref = "csv" type = "file" @change.prevent="validFileMimeType" name = "csv">
             <slot name = "error" v-if = "showErrorMessage">
                 <div class="invalid-feedback d-block">
@@ -15,20 +15,32 @@
                 </button>
             </slot>
         </div>
+        <div  style="float:right; marginRight : 10px; marginTop:10px;">
+            <download-excel
+                class="btn btn-primary"
+                :data="totalList">
+                파일 저장하기
+            </download-excel>
+        </div>
         <br><br>
-        <ManagerTableView :totalList.sync="datatable" />
+        <TableView v-bind:totalList.sync="totalList"></TableView>
     </div>
 </template>
 
 <script>
-import { drop, forEach, get, map, set } from 'lodash';
+import Vue from 'vue';
+import {get} from 'lodash';
 import Papa from 'papaparse';
 import mimeTypes from "mime-types";
-import ManagerTableView from '@/components/ManagerTableView.vue';
+import TableView from '@/components/TableView.vue';
+import JsonExcel from "vue-json-excel";
+ 
+Vue.component("downloadExcel", JsonExcel);
+
 
 export default {
     components: {
-        ManagerTableView
+        TableView
     },
     props:{
         url: {
@@ -63,8 +75,17 @@ export default {
         csv: null,
         isValidFileMimeType: false,
         fileSelected: false,
-        datatable: [],
+        totalList: [],
+        fileName:'',
     }),
+    computed: {
+        showErrorMessage() {
+                return this.fileSelected && !this.isValidFileMimeType;
+        },
+        disabledNextButton() {
+            return !this.isValidFileMimeType;
+        }
+    },
     methods: {
         validFileMimeType() {
                 let file = this.$refs.csv.files[0];
@@ -82,19 +103,20 @@ export default {
         },
         load() {
             console.log('load 시작');
-            const _this = this;
             let result;
             this.readFile((output) => {
                 console.log(output);
                 result = get(Papa.parse(output, {skipEmptyLines: true, header:true}), "data");
                 console.log(result);
-                this.datatable = result;
+                this.totalList = result;
             });
             console.log('load 끝');
 
         },
         readFile(callback) {
             let file = this.$refs.csv.files[0];
+            this.fileName=file.name;
+            console.log(this.fileName);
             if (file) {
                 let reader = new FileReader();
                 reader.readAsText(file, "UTF-8");
@@ -106,17 +128,8 @@ export default {
                 console.log('readFile 함수');
             }
         },
-        makeNewFile(){
-            //this.datatable로 새 엑셀 만들면됨.
-        }
     },
-    computed: {
-        showErrorMessage() {
-                return this.fileSelected && !this.isValidFileMimeType;
-        },
-        disabledNextButton() {
-            return !this.isValidFileMimeType;
-        }
-    }
+
+
 }
 </script>
