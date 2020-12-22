@@ -75,7 +75,6 @@
         <div style="float:right; margin-bottom:10px; margin-right:10px;">
             <button v-if = "buttonEdit == true" id="contentEdit" class="btn btn-outline-primary" type="button" @click="editCell()">Edit</button>
             <button v-else id="contentEdit" class="btn btn-outline-primary" type="button"  @click="finishEdit()">finishEdit</button>
-            <button class="btn btn-outline-danger" style="margin-left:10px;" type="button">Delete</button>
         </div>
 
         <div style="marginRight:10px; marginLeft:10px"> 
@@ -113,7 +112,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(datalist, idx) in datatable" :key="idx">
+                    <tr v-for="(datalist, idx) in paginatedData" :key="idx">
                         <td>{{datalist.날짜}}</td>
                         <td>{{datalist.QA번호}}</td>
                         <td>{{datalist.대화순번}}</td>
@@ -155,6 +154,11 @@
                     </tr>
                 </tbody>
             </table>
+            <div class="btn_cover" style="text-align: center">
+                <b-button :disabled="pageNum == 0" @click="prevPage" pill variant="outline-secondary">이전</b-button>
+                <span class="page-count">{{pageNum + 1}} / {{pageCount}} 페이지 </span>
+                <b-button :disabled="pageNum >= pageCount -1" @click="nextPage" pill variant="outline-secondary">다음</b-button>
+            </div>
         </div>
     </div>
 </template>
@@ -171,18 +175,18 @@ Vue.use(BootstrapVue);
 var Hangul = require('hangul-js');
 
 export default {
-    components:{
-    },
     props: {
         totalList: {
             type: Array,
             default: () => {
                 return [];
             }
-        }
+        },
     },
     data(){
         return {
+            pageNum:0,
+            pageSize:10,
             
             datatable: [],
             buttonEdit:true,
@@ -203,10 +207,6 @@ export default {
 
             listWord:[],
             similarword:'',
-
-            perPage: 10,
-            currentPage: 1,
-
         };
     },
     created(){
@@ -223,16 +223,30 @@ export default {
         },
     },
     computed: {
-        rows() {
-            return this.totalList.length
+        pageCount(){
+            let length = this.datatable.length,
+                listSize = this.pageSize,
+                page = Math.floor(length / listSize);
+
+            if(length % listSize > 0)
+                page += 1;
+
+            return page;
+        },
+
+        paginatedData(){
+            const start =  this.pageNum * this.pageSize,
+            end = start + this.pageSize;
+
+            return this.datatable.slice(start, end);
         }
     },
     methods: {
         getIntentlist(){
             console.log("여기 intentlist 가져올래!");
             var intentlist = new Array();
-            for(var i = 0; i <this.datatable.length; i++){
-                intentlist.push(this.datatable[i].intent);
+            for(var i = 0; i <this.totalList.length; i++){
+                intentlist.push(this.totalList[i].intent);
             }
             this.listIntent = Array.from(new Set(intentlist));
             console.log(this.listIntent);
@@ -241,8 +255,8 @@ export default {
         getCategorylist(){
             console.log("여기 category 가져올래!");
             var categorylist = new Array();
-            for(var i = 0; i <this.datatable.length; i++){
-                categorylist.push(this.datatable[i].카테고리);
+            for(var i = 0; i <this.totalList.length; i++){
+                categorylist.push(this.totalList[i].카테고리);
             }
             this.listCategory = Array.from(new Set(categorylist));
             console.log(this.listCategory);
@@ -251,8 +265,8 @@ export default {
         getWordlist(){
             console.log("문장 전체 리스트에서 단어");
             var wordlist = new Array();
-            for(var i = 0; i < this.datatable.length; i++){
-                var sentence = this.datatable[i].문장.split(' ');
+            for(var i = 0; i < this.totalList.length; i++){
+                var sentence = this.totalList[i].문장.split(' ');
                 wordlist.push(sentence);
             }
             this.listWord = [].concat.apply([], wordlist);
@@ -350,7 +364,16 @@ export default {
             this.totalList = this.datatable;
             this.$emit('update:datatable', this.totalList);
             this.buttonEdit = true;
+        },
+
+        nextPage(){
+            this.pageNum += 1;
+        },
+        prevPage(){
+            this.pageNum -= 1;
         }
+
+
 
     }
 

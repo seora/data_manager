@@ -10,7 +10,7 @@
                 </div>
             </slot>
             <slot name="next" :load="load">
-                <button type="submit" :disabled="disabledNextButton" class="btn btn-primary" @click.prevent="load">
+                <button type="submit" :disabled="disabledNextButton" class="btn btn-primary" @click.prevent="load" >
                     파일 불러오기
                 </button>
             </slot>
@@ -34,6 +34,8 @@ import Papa from 'papaparse';
 import mimeTypes from "mime-types";
 import TableView from '@/components/TableView.vue';
 import JsonExcel from "vue-json-excel";
+
+
  
 Vue.component("downloadExcel", JsonExcel);
 
@@ -129,7 +131,6 @@ export default {
             }
         },
     },
-
 
 }
 </script>

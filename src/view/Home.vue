@@ -7,14 +7,12 @@
 <script>
 
 import GetData from '../components/GetData.vue';
-import TableView from '../components/TableView.vue';
 
 
 export default {
   name: 'Home',
   components: {
     GetData,
-    TableView
   }
 }
 </script>

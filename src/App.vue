@@ -12,7 +12,7 @@
                 <a class="nav-link" href="#/create">데이터 추가</a>
                 </li>
                 <li class="nav-item">
-                <a class="nav-link" href="#">태그 관리</a>
+                <a class="nav-link" href="#/">태그 관리</a>
                 </li>
             </ul>
             </div>

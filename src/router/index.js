@@ -4,7 +4,10 @@ import Home from '@/view/Home'
 
 Vue.use(Router)
 
+const Create = () => import ( '../view/Create.vue');
+
 export default new Router({
+
   routes: [
     {
       path: '/',
@@ -14,7 +17,7 @@ export default new Router({
     {
       path: '/create',
       name: 'Create',
-      component: () => import ( '../view/Create.vue')
+      component : Create
     },
   ]
 })
