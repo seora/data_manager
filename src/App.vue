@@ -12,7 +12,7 @@
                 <a class="nav-link" href="#/create">데이터 추가</a>
                 </li>
                 <li class="nav-item">
-                <a class="nav-link" href="#/">태그 관리</a>
+                <a class="nav-link" href="#/setTag">태그 관리</a>
                 </li>
             </ul>
             </div>
@@ -35,17 +35,14 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
 }
-
 #nav {
   padding: 30px;
   text-align: center;
 }
-
 #nav a {
   font-weight: bold;
   color: #2c3e50;
 }
-
 #nav a.router-link-exact-active {
   color: #115e9c;
 }

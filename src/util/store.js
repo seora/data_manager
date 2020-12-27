@@ -7,7 +7,7 @@ export const store = new Vuex.Store({
     state: {
         totalList:[],
         categorylist:[],
-        intentlist:[]
+        intentlist:[],
     },
     getters: {
         getIntentlist(state) {
@@ -35,7 +35,7 @@ export const store = new Vuex.Store({
             state.listIntent = intent;
         },
         chngListCategory (state, category) {
-            state.listIntent = category;
-        }
+            state.listCategory = category;
+        },
     }
 });

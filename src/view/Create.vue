@@ -7,7 +7,6 @@
 
 <script>
 import Dialogue from '../components/Dialogue.vue';
-
 export default {
   name: 'Create',
   components:{

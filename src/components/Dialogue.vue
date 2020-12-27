@@ -59,13 +59,8 @@
 
 <script>
 import Vue from 'vue';
-import Vuex from 'vuex';
-import {components} from 'vue';
-
-import Modal from './modal.vue';
-
+import Modal from './Modal';
 import { store } from "@/util/store";
-
 export default {
     store: store,
     components:{
@@ -77,17 +72,13 @@ export default {
             sMessage: '',
             cMessage: '',
             messages: [],
-
             listCategory:[],
             listIntent:[],
-
             dialogueList:[],
-
             pickCategory:'',
             pickIntent:'',
             pickQA:'',
             count:0,
-
             sendData:[],
             showModal: false
         }
@@ -102,9 +93,7 @@ export default {
     },
     methods: {
         sendMessage(direction) {
-
             this.setCount();
-
             if (!this.cMessage && !this.sMessage) {
                 return
             }
@@ -121,13 +110,10 @@ export default {
                 let messageDisplay = this.$refs.chatArea
                 messageDisplay.scrollTop = messageDisplay.scrollHeight
             })
-
         },
-
         setCount(){
             this.count = this.count+1;
         },
-
         getTimeStamp(){
             const today = new Date();
             const date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
@@ -147,7 +133,6 @@ export default {
             }
             
         },
-
         //대화 새로고침
         refreshMessages(){
             this.messages = [];
@@ -205,11 +190,9 @@ export default {
   padding: .5em;
   width: 350px;
 }
-
 .refreshbtn{
     background-color: rgba( 255, 255, 255, 0.5 );
     outline: none;
     border:none
 }
-
 </style>

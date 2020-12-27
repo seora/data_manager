@@ -34,10 +34,7 @@ import Papa from 'papaparse';
 import mimeTypes from "mime-types";
 import TableView from '@/components/TableView.vue';
 import JsonExcel from "vue-json-excel";
-
-
 Vue.component("downloadExcel", JsonExcel);
-
 import { store } from "@/util/store";
 
 export default {
@@ -117,7 +114,6 @@ export default {
             });
             console.log('load 끝');
             this.setStore();
-
         },
         readFile(callback) {
             let file = this.$refs.csv.files[0];
@@ -136,6 +132,5 @@ export default {
         },
         
     },
-
 }
 </script>

@@ -1,5 +1,4 @@
 <!-- ManagerTableVIew.vue
-
 테이블 리스트
 1. 날짜
 - YYYY-MM-DD 형태의 날짜 데이터
@@ -12,7 +11,6 @@
 - 각 문장의 발화자 (C: 고객, S: 발화자)
 날짜,QA번호,대화순번,화자,QA여부,문장,카테고리,상담번호,상담내순번,intent,entity_1,entity_2,emotion_tagging
 //date, QA_num, d_seq, speaker, qa, sentence, category, c_num, c_seq, intent, entity_1, entity_2, emotion_tagging
-
 -->
 
 <template>
@@ -27,6 +25,11 @@
                         <div class="parent ml-2 p-1">
                             <div class="first"><input type="checkbox" v-model="toggleSpeaker1" true-value="c" false-value=""> 고객</div>
                             <div class="second"><input type="checkbox" v-model="toggleSpeaker2" true-value="s" false-value=""> 점원</div>
+                        </div>
+
+                        <div class="parent ml-2 p-1">
+                            <div class="first"><input type="checkbox" v-model="toggleQ" true-value="Q" false-value=""> Q</div>
+                            <div class="second"><input type="checkbox" v-model="toggleA" true-value="A" false-value=""> A</div>
                         </div>
 
                         <span style="display:inline-block; width:  40px;"></span>
@@ -48,13 +51,13 @@
                             <!--/Blue select-->
                         </div>
 
+
                         <div class="parent ml-2 p-1">
-                            <div class="first"><input type="checkbox" v-model="toggleQ" true-value="Q" false-value=""> Q</div>
-                            <div class="second"><input type="checkbox" v-model="toggleA" true-value="A" false-value=""> A</div>
+                            <div class="first"><input type="checkbox" v-model="toggleSen" true-value="sen" false-value=""> 문장내 검색</div>
+                            <div class="second"><input type="checkbox" v-model="toggleEnt" true-value="ent" false-value=""> Entity 검색</div>
                         </div>
 
-                        <span style="display:inline-block; width:  70px;"></span>
-                        
+                        <span style="display:inline-block; width: 80px;"></span>
                         <div class="mt-2 ml-2">
                             <input type="checkbox" v-model="toggleSimilar" true-value="similar_yes" false-value="">
                                 유사 키워드 검색
@@ -62,7 +65,7 @@
                         
                         <div style="float:right;">
                             <div class="form-inline ml-2">
-                                <input class="form-control" type="text" v-model = "wordValue" placeholder="Search" v-on:keyup.enter = "search()" style="max-width: 200px;">
+                                <input class="form-control" type="text" v-model = "wordValue" placeholder="Search" v-on:keyup.enter = "search()" style="max-width: 300px;">
                                 <button class="btn btn-outline-primary" style="margin-left : 4px;" @click="search()"><img src="../assets/search.png"></button>
                             </div>
                         </div>
@@ -119,7 +122,7 @@
                         <td>{{datalist.화자}}</td>
                         <td>{{datalist.QA여부}}</td>
                         <td>
-                            <div v-if="buttonEdit">{{datalist.문장}}</div>
+                            <div class="td" v-if="buttonEdit">{{datalist.문장}}</div>
                             <div v-else>
                                 <input style="width:100%;" v-model="datalist.문장">
                             </div>
@@ -165,16 +168,14 @@
 
 
 <script>
-import Vue, { Component } from 'vue';
-
+import Vue from 'vue';
 import BootstrapVue from 'bootstrap-vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
 Vue.use(BootstrapVue);
 
-var Hangul = require('hangul-js');
-
 import { store } from "@/util/store";
+
 
 export default {
     store: store,
@@ -193,28 +194,28 @@ export default {
             
             datatable: [],
             buttonEdit:true,
-
             categoryValue: '',
             intentValue: '',
             wordValue:'',
-
             toggleSimilar: '',
-
             toggleSpeaker1:'',
             toggleSpeaker2:'',
             toggleQ:'',
             toggleA:'',
+            toggleSen:'',
+            toggleEnt:'',
 
             listIntent:[],
             listCategory:[],
-
             listWord:[],
+            listEntity:[],
+            
             similarword:'',
         };
     },
     created(){
         console.log('데이터 받아왔어요');
-        this.getStore();
+        this.totalList = this.$store.state.totalList;
         console.log(this.totalList);
         this.datatable = this.totalList;
     },
@@ -223,9 +224,7 @@ export default {
             this.datatable = val;
             this.getIntentlist();
             this.getCategorylist();
-            this.getWordlist();
             this.setStore();
-            this.getStore();
         },
     },
     computed: {
@@ -233,23 +232,19 @@ export default {
             let length = this.datatable.length,
                 listSize = this.pageSize,
                 page = Math.floor(length / listSize);
-
             if(length % listSize > 0)
                 page += 1;
-
             return page;
         },
-
         paginatedData(){
             const start =  this.pageNum * this.pageSize,
             end = start + this.pageSize;
-
             return this.datatable.slice(start, end);
         }
     },
     methods: {
         getIntentlist(){
-            this.intentlist = this.$store.getters.getIntentlist;
+            this.listIntent = this.$store.getters.getIntentlist;
         },
         getCategorylist(){
             this.listCategory = this.$store.getters.getCategorylist;
@@ -257,21 +252,35 @@ export default {
         getWordlist(){
             console.log("문장 전체 리스트에서 단어");
             var wordlist = new Array();
-            for(var i = 0; i < this.totalList.length; i++){
-                var sentence = this.totalList[i].문장.split(' ');
+            for(var i = 0; i < this.datatable.length; i++){
+                var sentence = this.datatable[i].문장.split(' ');
                 wordlist.push(sentence);
             }
             this.listWord = [].concat.apply([], wordlist);
             this.listWord = Array.from(new Set(this.listWord));
 
-            console.log(this.listWord);
             return this.listWord;
+        },
+        getEntitylist(){
+            var entitylist = new Array();
+            for(var i = 0; i < this.datatable.length; i++){
+                var entity1 = this.datatable[i].entity_1.split(': ');
+                // var regExp = /[~!@:#$%<>^&*()\-=+_’]/gi;
+                // if(regExp.test(entity1)){
+                //     entity1 = entity1.replace(regExp, ""); // 찾은 특수 문자를 제거
+                // }
+                entitylist.push(entity1);
+            }
+            this.listEntity = [].concat.apply([], entitylist);
+            this.listEntity = Array.from(new Set(this.listEntity));
+
+            console.log(this.listEntity);
+            return this.listEntity;
         },
         search() {
             this.datatable = this.totalList;
-
             //1. 고객, 점원에 맞는 데이터 필터링
-            this.datatable = this.datatable.filter((value, idx) =>{
+            this.datatable = this.datatable.filter((value) =>{
                 if(this.toggleSpeaker1 !== '' && this.toggleSpeaker2 === ''){
                     if(value.화자 == this.toggleSpeaker1){
                         return value;
@@ -283,12 +292,9 @@ export default {
                 }else{
                     return value;
                 }
-
             }, this);
-
             //2. 카테고리 intent 에 맞는 데이터 필터링
-            this.datatable = this.datatable.filter((value, idx) => {
-
+            this.datatable = this.datatable.filter((value) => {
                 if (this.categoryValue === '' && this.intentValue === '') {
                     return value;
                 } else if (this.categoryValue === '' && this.intentValue !== '') {
@@ -305,34 +311,67 @@ export default {
                     }
                 }
             }, this);
-
-
-            // 3. 검색어 속한 문장 검출
-            console.log(this.datatable);
-            this.datatable = this.datatable.filter((value, idx) => {
-
-                // 유사어 찾기가 체크되어있을시!
-                if(this.toggleSimilar !== ''){
-                    if(value.문장.includes(this.getSimiliarWord()) || value.문장.includes(this.wordValue)){
+            //3. QA 별 문장 검출
+            this.datatable = this.datatable.filter((value) =>{
+                if(this.toggleQ !== '' && this.toggleA === ''){
+                    if(value.QA여부 == this.toggleQ){
+                        return value;
+                    }
+                }else if(this.toggleQ == '' && this.toggleA !== ''){
+                    if(value.QA여부 == this.toggleA){
                         return value;
                     }
                 }else{
-                    if(value.문장.includes(this.wordValue)){
-                        return value;
-                    }
+                    return value;
                 }
-                
             }, this);
 
+            // 4. 검색어 속한 문장 검출
+            if(this.wordValue !== ''){
+                console.log(this.datatable);
+                this.datatable = this.datatable.filter((value) => {
+                    //문장 내 검색
+                    if(this.toggleSen !== ''){
+                        console.log(this.listWord);
+                        // 유사어 찾기가 체크되어있을시!
+                        if(this.toggleSimilar !== ''){
+                            if(value.문장.includes(this.getSimiliarWord()) || value.문장.includes(this.wordValue)){
+                                return value;
+                            }
+                        }else{
+                            if(value.문장.includes(this.wordValue)){
+                                return value;
+                            }
+                        }
+                    }
+                    
+                    //entity 내 검색
+                    if(this.toggleEnt !== ''){
+                        if(this.toggleSimilar !== ''){
+                            if(value.entity_1.includes(this.getSimiliarEntity()) || value.entity_1.includes(this.wordValue)){
+                                return value;
+                            }
+                        }else{
+                            if(value.entity_1.includes(this.wordValue)){
+                                return value;
+                            }
+                        }
+                    }
+                    
+                }, this);
+            }
+            
         },
         getSimiliarWord(){
             console.log("유의어 찾기!")
             let similarAlgorithm = function(a, b) {
-                var searcher = new Hangul.Searcher(a);
-                searcher.search(b);
-                return searcher
+                let count = 0
+                for(let i = 0 ; i < a.length - 1 ; i++) {
+                    count = b.includes(a.substr(i, 2)) ? ++count : count
+                }
+                return count
             }
-
+            this.listWord = this.getWordlist();
             var distance = 0;
             for (var w = 0; w < this.listWord.length -1; w++){
                 if(distance < similarAlgorithm(this.wordValue, this.listWord[w])){
@@ -342,14 +381,32 @@ export default {
             }
             return this.similarword;
         },
-
+        getSimiliarEntity(){
+            console.log("유의어 찾기!")
+            let similarAlgorithm = function(a, b) {
+                let count = 0
+                for(let i = 0 ; i < a.length - 1 ; i++) {
+                    count = b.includes(a.substr(i, 2)) ? ++count : count
+                }
+                return count
+            }
+            this.listEntity = this.getEntitylist();
+            console.log(this.listEntity);
+            var distance = 0;
+            for (var w = 0; w < this.listEntity.length -1; w++){
+                if(distance < similarAlgorithm(this.wordValue, this.listEntity[w])){
+                    distance = similarAlgorithm(this.wordValue, this.listEntity[w]);
+                    this.similarword = this.listEntity[w];
+                }
+            }
+            return this.similarword;
+        },
+        
         //수정하기
         editCell(){
             console.log("수정할래요");
             this.buttonEdit = false;
-
         },
-
         //수정 끝내기
         finishEdit(){
             console.log("수정 완료");
@@ -357,35 +414,25 @@ export default {
             this.$emit('update:datatable', this.totalList);
             this.buttonEdit = true;
         },
-
         nextPage(){
             this.pageNum += 1;
         },
         prevPage(){
             this.pageNum -= 1;
         },
-
         //저장소에 데이터 넘기기
         setStore(){
             this.$store.commit('chngTotalList', this.totalList);
             this.$store.state.categorylist = this.listCategory;
             this.$store.state.intentlist = this.listIntent;
         },
-
-        //저장소에서 데이터 가져오기
-        getStore(){
-            this.totalList = this.$store.state.totalList;
-        }
-
     }
-
 }
 </script>
 
 <style scoped>
 table {
     table-layout: fixed
-
 }
 th{
     font-size:10px;
@@ -396,6 +443,5 @@ td {
   font-size: 12px;
   text-overflow:ellipsis; overflow:hidden; white-space:nowrap;
 }
-
 
 </style>
