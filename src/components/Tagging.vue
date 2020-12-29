@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="tagging_layout">
         <b-card bg-variant="Light" title="Tagging">
             <b-input-group prepend="태그할 단어와 태그명을 입력하세요" class="mb-2">
                 <input class="form-control" type="text" v-model = "word" placeholder="단어">
@@ -38,7 +38,7 @@
 
         <modal v-if="showModal" @close="showModal = false">
                 <h3 slot="header">경고</h3>
-                <span slot="body">입력 사항을 모두 선택해주세요.</span>
+                <span slot="body">{{ showMessage }}</span>
                 <button slot="footer" @click="showModal = false">닫기</button>
         </modal>
     </div>
@@ -67,7 +67,8 @@ export default {
             pageNum:0,
             pageSize:10,
 
-            showModal: false
+            showModal: false,
+            showMessage: '',
         }
     },
     created(){
@@ -99,6 +100,8 @@ export default {
             var entity = this.tag1 + ": " + this.word;
             var entity2 = "<" + this.word+":" + this.tag2 + ">";
 
+            var count = 0;
+
             if (this.word !== '' && this.tag !== ''){
                 for(var i = 0; i < this.data.length; i++){
                     if(this.data[i].문장.includes(this.word)){
@@ -117,10 +120,19 @@ export default {
                             this.data[i].entity_1 = this.data[i].entity_1 + " " + entity;
                             this.data[i].entity_2 = this.data[i].문장.replace(this.word, entity2);
                         }
+                        count++;
                     }
                 }
+                
+                if(count == 0){
+                    this.showMessage = '문장 내에 태그할 단어가 존재하지 않습니다';
+                    this.showModal = !this.showModal;
+                }
+
             }else{
+                this.showMessage = '입력 사항을 모두 선택해주세요';
                 this.showModal = !this.showModal;
+
             }
             console.log(this.data);
         },
@@ -152,14 +164,23 @@ export default {
 </script>
 
 <style scoped>
-table {
-    table-layout: auto;
+.tagging_layout{
     margin-left: 10px;
     margin-right: 10px;
+}
+
+table {
+    table-layout: auto;
 }
 td {
   font-size: 12px;
   text-overflow:ellipsis; overflow:hidden; white-space:nowrap;
 }
+
+.bg-grey {background:#efefef}
+.breadcrumb {background: none; margin: 0;font-weight: 300;padding-left: 0; font-size: 13px;}
+.breadcrumb a {color: #999;}
+.breadcrumb > .active {color: #696969;}
+.breadcrumb > li + li::before {content: "\203A";color: #999;padding: 0 8px;}
 
 </style>

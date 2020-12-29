@@ -33,24 +33,13 @@
                         </div>
 
                         <span style="display:inline-block; width:  40px;"></span>
-
-                        <!--Grid column-->
-                        <div class="col-md-2">
-                            <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray" v-model="categoryValue">
-                                <option value="">카테고리별</option>
-                                <option v-for="idx in listCategory.length" :key="idx" :value="listCategory[idx-1]">{{ listCategory[idx-1] }}</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-2">
-                            <!--Blue select-->
-                            <select class="mdb-select colorful-select dropdown-primary mt-2 ml-2" style="width:150px; solid gray" v-model="intentValue">
-                                <option value="" >Intent별</option>
-                                <option v-for="idx in listIntent.length" :key="idx" :value="listIntent[idx-1]">{{ listIntent[idx-1] }}</option>
-                            </select>
-                            <!--/Blue select-->
-                        </div>
-
+                        
+                        
+                        <multiselect style="max-width:250px;" v-model="pickCategory" placeholder="Category" :options="listCategory" :multiple="true" :taggable="true" @tag="addTag"></multiselect>
+                        <span style="display:inline-block; width: 20px;"></span>
+                        <multiselect style="max-width:250px;" v-model="pickIntent" placeholder="Intent" :options="listIntent" :multiple="true" :taggable="true" @tag="addTag"></multiselect>
+                    
+                        <span style="display:inline-block; width: 20px;"></span>
 
                         <div class="parent ml-2 p-1">
                             <div class="first"><input type="checkbox" v-model="toggleSen" true-value="sen" false-value=""> 문장내 검색</div>
@@ -79,6 +68,13 @@
             <button v-if = "buttonEdit == true" id="contentEdit" class="btn btn-outline-primary" type="button" @click="editCell()">Edit</button>
             <button v-else id="contentEdit" class="btn btn-outline-primary" type="button"  @click="finishEdit()">finishEdit</button>
         </div>
+
+        <select style="float:left; margin-bottom:10px; margin-left:10px;" v-model="pageSize">
+            <option value="10">페이지당</option>
+            <option value="10">10개씩 보기</option>
+            <option value="20">20개씩 보기</option>
+            <option value="50">50개씩 보기</option>
+        </select>
 
         <div style="marginRight:10px; marginLeft:10px"> 
             <table class="table table-striped table-bordered table-sm">
@@ -157,11 +153,16 @@
                     </tr>
                 </tbody>
             </table>
-            <div class="btn_cover" style="text-align: center">
+
+            <div class='tableBtn'>
                 <b-button :disabled="pageNum == 0" @click="prevPage" pill variant="outline-secondary">이전</b-button>
-                <span class="page-count">{{pageNum + 1}} / {{pageCount}} 페이지 </span>
+                <b-button variant="light" @click="goPage(pageNum)">{{ pageNum + 1 }}</b-button>
                 <b-button :disabled="pageNum >= pageCount -1" @click="nextPage" pill variant="outline-secondary">다음</b-button>
+                <span style="display:inline-block; width: 100px;"></span>
+                <span class="page-count">{{pageNum + 1}} / {{pageCount}} 페이지 </span>
             </div>
+
+
         </div>
     </div>
 </template>
@@ -169,6 +170,10 @@
 
 <script>
 import Vue from 'vue';
+
+import Multiselect from 'vue-multiselect';
+Vue.component('multiselect', Multiselect);
+
 import BootstrapVue from 'bootstrap-vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
@@ -191,6 +196,7 @@ export default {
         return {
             pageNum:0,
             pageSize:10,
+            currentPage:1,
             
             datatable: [],
             buttonEdit:true,
@@ -211,6 +217,10 @@ export default {
             listEntity:[],
             
             similarword:'',
+
+            pickCategory: [],
+            pickIntent:[],
+
         };
     },
     created(){
@@ -295,21 +305,51 @@ export default {
             }, this);
             //2. 카테고리 intent 에 맞는 데이터 필터링
             this.datatable = this.datatable.filter((value) => {
-                if (this.categoryValue === '' && this.intentValue === '') {
+
+                var pickC = this.pickCategory.length;
+                var pickI = this.pickIntent.length;
+                
+                // 카테고리, intent 모두 되어있을 시
+                if(pickC !== 0 && pickI !== 0){
+                    for(var a = 0; a < pickC ; a++){
+                        for (var b= 0; b < pickI; b++){
+                            if (value.intent == this.pickIntent[b] && value.카테고리 == this.pickCategory[a]) {
+                                return value;
+                            }
+                        }
+                    }
+                }else if(pickC !== 0 && pickI == 0){
+                    for (var i = 0; i < pickC; i++){
+                        if(value.카테고리 == this.pickCategory[i]){
+                            return value;
+                        }
+                    }
+                }else if(pickC == 0 && pickI !== 0){
+                    for(var j = 0; j < pickI ; j++){
+                        if(value.intent == this.pickIntent[j]){
+                            return value;
+                        }
+                    }
+                }else{
                     return value;
-                } else if (this.categoryValue === '' && this.intentValue !== '') {
-                    if (value.intent == this.intentValue) {
-                        return value;
-                    }
-                } else if (this.categoryValue !== '' && this.intentValue === '') {
-                    if (value.카테고리 == this.categoryValue) {
-                        return value;
-                    }
-                } else {
-                    if (value.intent == this.intentValue && value.카테고리 == this.categoryValue) {
-                        return value;
-                    }
                 }
+
+                
+                // if (this.categoryValue === '' && this.intentValue === '') {
+                //     return value;
+                // } else if (this.categoryValue === '' && this.intentValue !== '') {
+                //     if (value.intent == this.intentValue) {
+                //         return value;
+                //     }
+                // } else if (this.categoryValue !== '' && this.intentValue === '') {
+                //     if (value.카테고리 == this.categoryValue) {
+                //         return value;
+                //     }
+                // } else {
+                //     if (value.intent == this.intentValue && value.카테고리 == this.categoryValue) {
+                //         return value;
+                //     }
+                // }
             }, this);
             //3. QA 별 문장 검출
             this.datatable = this.datatable.filter((value) =>{
@@ -420,15 +460,30 @@ export default {
         prevPage(){
             this.pageNum -= 1;
         },
+        goPage(num){
+            this.pageNum = num;
+        },
         //저장소에 데이터 넘기기
         setStore(){
             this.$store.commit('chngTotalList', this.totalList);
             this.$store.state.categorylist = this.listCategory;
             this.$store.state.intentlist = this.listIntent;
         },
+
+
+        addTag (newTag) {
+            const tag = {
+                name: newTag,
+                code: newTag.substring(0, 2) + Math.floor((Math.random() * 10000000))
+            }
+            this.options.push(tag)
+            this.value.push(tag)
+        }
     }
 }
 </script>
+
+<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 
 <style scoped>
 table {
@@ -443,5 +498,26 @@ td {
   font-size: 12px;
   text-overflow:ellipsis; overflow:hidden; white-space:nowrap;
 }
+
+.tableBtn{
+    text-align: center
+}
+
+.tableBtn .active{
+    background-color: rgb(170, 170, 170);
+    color: white;
+    font-weight: bold;
+
+}
+
+
+a.first::after {
+  content:'...'
+}
+
+a.last::before {
+  content:'...'
+}
+
 
 </style>
