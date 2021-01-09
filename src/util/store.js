@@ -8,6 +8,7 @@ export const store = new Vuex.Store({
         totalList:[],
         categorylist:[],
         intentlist:[],
+        sentencelist:[],
     },
     getters: {
         getIntentlist(state) {
@@ -26,6 +27,15 @@ export const store = new Vuex.Store({
             state.listCategory = Array.from(new Set(categorylist));
             return state.listCategory;
         },
+        getSentencelist(state){
+            var sentencelist = new Array();
+            for(var i = 0; i < state.totalList.length; i++){
+                sentencelist.push(state.totalList[i].문장.split(' '));
+            }
+            state.listWord = [].concat.apply([], sentencelist);
+            state.listWord = Array.from(new Set(this.listWord));
+            return state.listWord;
+        }
       },
     mutations: { 
         chngTotalList (state, chngVal) {  
@@ -37,5 +47,8 @@ export const store = new Vuex.Store({
         chngListCategory (state, category) {
             state.listCategory = category;
         },
+        chngListSentence (state, word){
+            state.listWord = word;
+        }
     }
 });

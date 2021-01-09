@@ -63,19 +63,12 @@
             </section>
         </div>
 
-
         <div style="float:right; margin-bottom:10px; margin-right:10px;">
             <button v-if = "buttonEdit == true" id="contentEdit" class="btn btn-outline-primary" type="button" @click="editCell()">Edit</button>
             <button v-else id="contentEdit" class="btn btn-outline-primary" type="button"  @click="finishEdit()">finishEdit</button>
         </div>
 
-        <select style="float:left; margin-bottom:10px; margin-left:10px;" v-model="pageSize">
-            <option value="10">페이지당</option>
-            <option value="10">10개씩 보기</option>
-            <option value="20">20개씩 보기</option>
-            <option value="50">50개씩 보기</option>
-        </select>
-
+        
         <div style="marginRight:10px; marginLeft:10px"> 
             <table class="table table-striped table-bordered table-sm">
                 <colgroup>
@@ -161,9 +154,13 @@
                 <span style="display:inline-block; width: 100px;"></span>
                 <span class="page-count">{{pageNum + 1}} / {{pageCount}} 페이지 </span>
             </div>
-
-
         </div>
+
+        <modal v-if="showModal" @close="showModal = false">
+            <h3 slot="header">경고</h3>
+            <span slot="body">{{ showMessage }}</span>
+            <button slot="footer" @click="showModal = false">닫기</button>
+        </modal>
     </div>
 </template>
 
@@ -174,16 +171,23 @@ import Vue from 'vue';
 import Multiselect from 'vue-multiselect';
 Vue.component('multiselect', Multiselect);
 
+import Loading from 'vue-loading-overlay';
+Vue.component('loading', Loading);
+
 import BootstrapVue from 'bootstrap-vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
 Vue.use(BootstrapVue);
 
 import { store } from "@/util/store";
+import Modal from './Modal';
 
 
 export default {
     store: store,
+    components:{
+        Modal : Modal
+    },
     props: {
         totalList: {
             type: Array,
@@ -195,8 +199,10 @@ export default {
     data(){
         return {
             pageNum:0,
-            pageSize:10,
+            pageSize:20,
             currentPage:1,
+
+            isLoading:false,
             
             datatable: [],
             buttonEdit:true,
@@ -221,6 +227,9 @@ export default {
             pickCategory: [],
             pickIntent:[],
 
+            showModal: false,
+            showMessage: '',
+
         };
     },
     created(){
@@ -234,11 +243,12 @@ export default {
             this.datatable = val;
             this.getIntentlist();
             this.getCategorylist();
+            this.getWordlist();
             this.setStore();
         },
     },
     computed: {
-        pageCount(){
+        pageCount: function(){
             let length = this.datatable.length,
                 listSize = this.pageSize,
                 page = Math.floor(length / listSize);
@@ -246,13 +256,16 @@ export default {
                 page += 1;
             return page;
         },
-        paginatedData(){
+        paginatedData: function(){
             const start =  this.pageNum * this.pageSize,
             end = start + this.pageSize;
             return this.datatable.slice(start, end);
         }
     },
     methods: {
+        finishLoading(){
+            this.isLoading = false
+        },
         getIntentlist(){
             this.listIntent = this.$store.getters.getIntentlist;
         },
@@ -260,16 +273,17 @@ export default {
             this.listCategory = this.$store.getters.getCategorylist;
         },
         getWordlist(){
-            console.log("문장 전체 리스트에서 단어");
-            var wordlist = new Array();
-            for(var i = 0; i < this.datatable.length; i++){
-                var sentence = this.datatable[i].문장.split(' ');
-                wordlist.push(sentence);
-            }
-            this.listWord = [].concat.apply([], wordlist);
-            this.listWord = Array.from(new Set(this.listWord));
+            this.listWord = this.$store.getters.getSentencelist;
+            // console.log("문장 전체 리스트에서 단어");
+            // var wordlist = new Array();
+            // for(var i = 0; i < this.datatable.length; i++){
+            //     var sentence = this.datatable[i].문장.split(' ');
+            //     wordlist.push(sentence);
+            // }
+            // this.listWord = [].concat.apply([], wordlist);
+            // this.listWord = Array.from(new Set(this.listWord));
 
-            return this.listWord;
+            // return this.listWord;
         },
         getEntitylist(){
             var entitylist = new Array();
@@ -288,6 +302,11 @@ export default {
             return this.listEntity;
         },
         search() {
+            if(this.toggleSimilar != ''){
+                this.showMessage = '유사도 검색은 아직 지원하지 않는 기능입니다';
+                this.showModal = !this.showModal;
+            }
+            
             this.datatable = this.totalList;
             //1. 고객, 점원에 맞는 데이터 필터링
             this.datatable = this.datatable.filter((value) =>{
@@ -333,23 +352,6 @@ export default {
                 }else{
                     return value;
                 }
-
-                
-                // if (this.categoryValue === '' && this.intentValue === '') {
-                //     return value;
-                // } else if (this.categoryValue === '' && this.intentValue !== '') {
-                //     if (value.intent == this.intentValue) {
-                //         return value;
-                //     }
-                // } else if (this.categoryValue !== '' && this.intentValue === '') {
-                //     if (value.카테고리 == this.categoryValue) {
-                //         return value;
-                //     }
-                // } else {
-                //     if (value.intent == this.intentValue && value.카테고리 == this.categoryValue) {
-                //         return value;
-                //     }
-                // }
             }, this);
             //3. QA 별 문장 검출
             this.datatable = this.datatable.filter((value) =>{
@@ -373,35 +375,48 @@ export default {
                     //문장 내 검색
                     if(this.toggleSen !== ''){
                         console.log(this.listWord);
-                        // 유사어 찾기가 체크되어있을시!
-                        if(this.toggleSimilar !== ''){
-                            if(value.문장.includes(this.getSimiliarWord()) || value.문장.includes(this.wordValue)){
+
+                        // // 유사어 찾기가 체크되어있을시!
+                        // if(this.toggleSimilar !== ''){
+                        //     this.isLoading = true;
+                        //     if(value.문장.includes(this.getSimiliarWord()) || value.문장.includes(this.wordValue)){
+                        //         return value;
+                        //     }
+                        // }else{
+                        //     if(value.문장.includes(this.wordValue)){
+                        //         return value;
+                        //     }
+                        // }
+
+                        if(value.문장.includes(this.wordValue)){
                                 return value;
-                            }
-                        }else{
-                            if(value.문장.includes(this.wordValue)){
-                                return value;
-                            }
                         }
                     }
                     
                     //entity 내 검색
                     if(this.toggleEnt !== ''){
-                        if(this.toggleSimilar !== ''){
-                            if(value.entity_1.includes(this.getSimiliarEntity()) || value.entity_1.includes(this.wordValue)){
+                        // if(this.toggleSimilar !== ''){
+                        //     if(value.entity_1.includes(this.getSimiliarEntity()) || value.entity_1.includes(this.wordValue)){
+                        //         return value;
+                        //     }
+                        // }else{
+                        //     if(value.entity_1.includes(this.wordValue)){
+                        //         return value;
+                        //     }
+                        // }
+
+                        if(value.문장.includes(this.wordValue)){
                                 return value;
-                            }
-                        }else{
-                            if(value.entity_1.includes(this.wordValue)){
-                                return value;
-                            }
                         }
                     }
                     
                 }, this);
             }
-            
+            this.pageNum = 0;
+
+            this.finishLoading();
         },
+        //유의어 검색 - 문장
         getSimiliarWord(){
             console.log("유의어 찾기!")
             let similarAlgorithm = function(a, b) {
@@ -421,6 +436,8 @@ export default {
             }
             return this.similarword;
         },
+
+        //유의어 검색 - entity
         getSimiliarEntity(){
             console.log("유의어 찾기!")
             let similarAlgorithm = function(a, b) {
@@ -484,6 +501,7 @@ export default {
 </script>
 
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+<style src="vue-loading-overlay/dist/vue-loading.css"></style>
 
 <style scoped>
 table {
@@ -496,7 +514,7 @@ th{
 }
 td {
   font-size: 12px;
-  text-overflow:ellipsis; overflow:hidden; white-space:nowrap;
+  word-wrap: normal;
 }
 
 .tableBtn{
