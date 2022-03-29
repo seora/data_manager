@@ -1,6 +1,6 @@
 # data_manager
 
-> MRC를 위한 데이터 관리 프로젝트
+> MRC를 위한 데이터 관리 tool
 
 > A Vue.js project
 
@@ -19,5 +19,11 @@ npm run build
 # build for production and view the bundle analyzer report
 npm run build --report
 ```
+
+
+## To Build this Project
+npm install -g @vuecli
+npm run serve
+
 
 For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
